@@ -31,6 +31,8 @@ import { Column, Tweets, SubwayTimes } from './components'
 
 import moment from 'moment'
 
+console.log(process.env)
+
 const useStyles = makeStyles(theme => ({
 	content: {
 		flexGrow: 1,
