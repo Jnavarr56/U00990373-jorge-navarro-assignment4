@@ -60,7 +60,7 @@ const useStyles = makeStyles(theme => ({
 	}
 }))
 
-const REFRESH_TIMEOUT = 10000
+const REFRESH_TIMEOUT = process.env.NODE_ENV === 'development' ? 30000 : 5000
 
 const SubwayTimes = () => {
 	const classes = useStyles()
