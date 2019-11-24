@@ -18,11 +18,14 @@ import {
 	Tab
 } from '@material-ui/core'
 import { makeStyles } from '@material-ui/styles'
+import { getAddressFromCoords, getNearbyStations, getWalkingDirections, isInNYC } from '../utils/googleMaps' 
+import { getAllNextNearbyDepartures, getNextDeparturesForStation } from '../utils/here' 
 import LoadingOverlay from 'react-loading-overlay'
-import axios from 'axios'
+
 import Carousel from 'react-material-ui-carousel'
-import moment from 'moment'
 import CountDown, { zeroPad } from 'react-countdown-now'
+import moment from 'moment'
+
 
 const useStyles = makeStyles(theme => ({
 	overlay: {
@@ -60,9 +63,12 @@ const useStyles = makeStyles(theme => ({
 	}
 }))
 
+
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
 const REFRESH_TIMEOUT = process.env.NODE_ENV === 'development' ? 5000 : 30000
 
 const SubwayTimes = () => {
+
 	const classes = useStyles()
 
 	const [ permission, setPermission ] = useState(null)
@@ -74,140 +80,148 @@ const SubwayTimes = () => {
 	const [ refreshing, setRefreshing ] = useState(false)
 	const [ tab, setTabs ] = useState('photos')
 
-	const handleConfirmPermissions = () => {
-		const { permissions, geolocation } = navigator
+	const handleConfirmPermissions = async () => {
 
-		setLoading('Checking location permissions...')
-		setTimeout(() => {
-			permissions.query({ name: 'geolocation' }).then(({ state }) => {
-				if (state !== 'granted') {
+		setLoading('Checking location permissions')
+		await delay(1000)
+		
+		navigator.geolocation.getCurrentPosition(
+			async ({ coords }) => {
+				console.log('coords: ', coords)
+
+				setPermission(true)	
+				setLoading('Permissions granted! :)')
+				await delay(1000)
+
+
+				setLoading('Getting coordinates')
+				await delay(1000)
+				const { latitude: lat, longitude: lng } = coords 
+				setLoading(`Found coordinates: (${lat}, ${lng})!`)
+				await delay(1000)
+
+				
+				setLoading(`Checking if location is in NYC`)
+				await delay(1000)
+				//breakpoints
+				const addressResults = await getAddressFromCoords(lat, lng)
+				console.log('addressResults: ', addressResults)
+				if (!addressResults) return
+				const validAddress = isInNYC(addressResults)
+				console.log('valid: ', validAddress)
+				if (!validAddress) return
+				setLoading(`Location is in NYC!`)
+				await delay(1000)
+
+				setLoading(`Getting address`)
+				await delay(1000)
+				const address = addressResults[0]
+				console.log('address: ', address)
+				setLoading(`Found address: ${address.formatted_address}!`)
+				await delay(1000)
+
+
+				setLoading(`Searching for nearby subway stations`)
+				await delay(1000)
+				// breakpoint
+				const nearbyStations = await getNearbyStations(lat, lng)
+				console.log('nearbyStations: ', nearbyStations)
+				if (!nearbyStations) return
+				setLoading(`Found some nearby stations: ${nearbyStations.length} exactly!`)
+				await delay(1000)
+
+
+				setLoading(`Getting closest station`)
+				await delay(1000)
+				const closestStation = nearbyStations[0]
+				console.log('closestStation: ', closestStation)
+				setLoading(`Found closest station: ${closestStation.name}!`)
+				await delay(1000)
+
+
+				setLoading(`Getting walking route to station - ${closestStation.name}`)
+				await delay(1000)
+				const origin = { lat, lng } 
+				const destination = {
+					lat: closestStation.geometry.location.lat(),
+					lng: closestStation.geometry.location.lng()
+				}
+				const walkingDirections = await getWalkingDirections(origin, destination)
+				//breakpoint
+				if (!walkingDirections) return
+				console.log('walkingDirections', walkingDirections)
+				setLoading(`Found walking route to station - ${closestStation.name}!`)
+				await delay(1000)
+
+
+				setLoading(`Getting nearby departures`)
+				await delay(1000)
+				const nearbyDepartures = await getAllNextNearbyDepartures(lat, lng)
+				//breakpoint
+				if (!nearbyDepartures) return
+				console.log('nearbyDepartures', nearbyDepartures)
+				setLoading(`Found all nearby departures!`)
+				await delay(1000)
+
+
+				setLoading(`Matching nearby departures to station - ${closestStation.name}`)
+				await delay(1000)
+				const closestStationDepartures = nearbyDepartures[0]
+				console.log('nearbyDepartures', nearbyDepartures)
+				setLoading(`Matched nearby departures to station - ${closestStation.name}!`)
+				await delay(1000)
+
+
+				setLoading(`Building refresh function for station - ${closestStation.name}`)
+				await delay(1000)
+
+				const refreshDepartures = async () => {
+					console.log('Refreshing', closestStationDepartures.Stn.id)
+					
+					setRefreshing(true)
+
+					
+					const newDepartures = await getNextDeparturesForStation(closestStationDepartures.Stn.id)
+					//breakpoint	
+					if (newDepartures) {
+					
+						setRefreshing(false)
+						console.log('Refreshing', newDepartures)
+						setTimeout(refreshDepartures, REFRESH_TIMEOUT)
+					}
+				} 
+				setLoading(`Built refresh function for station - ${closestStation.name}!`)
+				await delay(1000)
+
+				console.log('Done! :)')
+				await delay(1000)
+			},
+			({ code }) => {
+				console.log('ERR')
+				if (code === 1) {
 					setPermission(false)
 					setLoading('')
-				} else {
-					console.log(state)
-					setPermission(true)
-					setLoading('Permissions granted, getting coordinates...')
-
-					geolocation.getCurrentPosition(
-						({ coords }) => {
-							setLoading(
-								`Coordinates found: latitude ${coords.latitude}, longitude ${coords.longitude}...`
-							)
-
-							const { google } = window
-							const { latitude: lat, longitude: lng } = coords
-
-							const query = {
-								location: {
-									lat,
-									lng
-								},
-								rankBy: google.maps.places.RankBy.DISTANCE,
-								type: [ 'subway_station' ]
-							}
-
-							const googlePlaceSearch = new google.maps.places.PlacesService(
-								document.getElementById('dummy-map')
-							)
-
-							googlePlaceSearch.nearbySearch(query, stations => {
-								setLoading(
-									`Nearest subway station found: ${stations[0].name}, getting directions...`
-								)
-
-								const directionsService = new google.maps.DirectionsService()
-
-								const request = {
-									origin: query.location,
-									destination: {
-										lat: stations[0].geometry.location.lat(),
-										lng: stations[0].geometry.location.lng()
-									},
-									travelMode: 'WALKING'
-								}
-
-								directionsService.route(request, (response, status) => {
-									console.log(response, status)
-
-									if (status !== 'OK') {
-										return null
-									}
-
-									setDirections(response)
-
-									setLoading(`Found directions, getting departures...`)
-
-									const HEREurl = `https://transit.api.here.com/v3/multiboard/by_geocoord.json?app_id=${
-										process.env.REACT_APP_HERE_APP_ID
-									}&app_code=${
-										process.env.REACT_APP_HERE_APP_CODE
-									}&center=${lat},${lng}&time=${new Date().toISOString()}&modes=subway`
-
-									axios
-										.get(HEREurl)
-										.then(({ data }) => {
-											setLoading('Initial departures found...')
-											const {
-												MultiNextDeparture
-											} = data.Res.MultiNextDepartures
-
-											setStationData({
-												...stations[0],
-												...MultiNextDeparture[0].Stn
-											})
-
-											setDepartures(MultiNextDeparture[0].NextDepartures.Dep)
-											setLoading('')
-
-											const refreshDepartures = () => {
-												console.log(MultiNextDeparture[0].Stn.id)
-												const url = `https://transit.api.here.com/v3/multiboard/by_stn_ids.json?lang=en&stnIds=${
-													MultiNextDeparture[0].Stn.id
-												}&time=${new Date().toISOString()}&app_id=${
-													process.env.REACT_APP_HERE_APP_ID
-												}&app_code=${process.env.REACT_APP_HERE_APP_CODE}`
-												setRefreshing(
-													`Updating arrival times for ${stations[0].name}`
-												)
-												axios.get(url).then(({ data }) => {
-													setTimeout(() => {
-														console.log(data)
-														setDepartures(
-															data.Res.MultiNextDepartures.MultiNextDeparture[0]
-																.NextDepartures.Dep
-														)
-														setRefreshing('')
-
-														setTimeout(refreshDepartures, REFRESH_TIMEOUT)
-													}, 250)
-												})
-											}
-
-											setTimeout(refreshDepartures, REFRESH_TIMEOUT)
-										})
-										.catch(err => console.log(err))
-								})
-							})
-						},
-						() => alert('error'),
-						{ enableHighAccuracy: true }
-					)
 				}
-			})
-		}, 2000)
+			},
+			{ enableHighAccuracy: true }
+		)
 	}
 
+	
 	useEffect(() => {
-		if (tab === 'map') {
+		if (tab === 'map' && directions) {
+			
 			const { google } = window
+
 			const directionsRenderer = new google.maps.DirectionsRenderer()
-			const map = new google.maps.Map(document.getElementById('map'), {
-				zoom: 7
-			})
+			const map = new google.maps.Map(document.getElementById('map'), { zoom: 7 })
+
 			directionsRenderer.setMap(map)
 			directionsRenderer.setDirections(directions)
 		}
 	}, [ directions, tab ])
+
+
 
 	return (
 		<LoadingOverlay
@@ -234,7 +248,7 @@ const SubwayTimes = () => {
 									I need to access your location.
 									<br />
 									<br />
-									Please make sure you've enabled access.
+									Please make sure you've enabled access!
 								</>
 							) : (
 								<>
@@ -246,6 +260,7 @@ const SubwayTimes = () => {
 							)}
 						</DialogContentText>
 					</DialogContent>
+					<Divider />
 					<DialogActions>
 						<Button
 							color="secondary"
@@ -391,7 +406,6 @@ const SubwayTimes = () => {
 					)}
 				</>
 			)}
-			<div id="dummy-map" />
 		</LoadingOverlay>
 	)
 }

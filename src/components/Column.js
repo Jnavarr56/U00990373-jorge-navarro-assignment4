@@ -29,14 +29,7 @@ const Column = ({ children, title, elevation, ...rest }) => {
 			item
 			{...rest}
 		>
-			<Card
-				className={classes.card}
-				elevation={elevation}
-			>
-				<CardHeader title={title} />
-				<Divider />
-				<CardContent className={classes.columnArea}>{children}</CardContent>
-			</Card>
+
 		</Grid>
 	)
 }

@@ -8,43 +8,60 @@ import {
 	Typography
 } from '@material-ui/core'
 import { makeStyles } from '@material-ui/styles'
-
+import LoadingOverlay from 'react-loading-overlay'
 const useStyles = makeStyles(theme => ({
-	appBar: {
-		marginBottom: 8,
-		'& .MuiTypography-root': {
-			fontSize: 16,
-			color: 'white',
-			fontWeight: 'bold'
-		}
-	},
-	logoGrouping: {
+	root: {
 		display: 'flex',
-		alignItems: 'center',
-		justifyContent: 'flex-start',
-		'& img': {
-			height: 36,
-			marginRight: 12
+		flexDirection: 'column',
+		height: '100vh',
+		'& > .MuiAppBar-root': {
+			'& .MuiTypography-root': {
+				fontSize: theme.spacing(2),
+				color: 'white',
+				fontWeight: 'bold'
+			},
+			'& > .MuiToolbar-root': {
+				'& > *:first-child': {
+					display: 'flex',
+					alignItems: 'center',
+					justifyContent: 'flex-start',
+					'& img': {
+						height: theme.spacing(4),
+						marginRight: theme.spacing(1.5),
+					}
+				}
+			},
+		},
+		'& > ._loading_overlay_wrapper': {
+			'&, & > *:first-child': {
+				height: '100%'
+			}
+		},
+		'& > .MuiBottomNavigation-root': {
+			'& *': { color: 'white' }
 		}
 	},
-	footerLabel: {
-		color: 'white'
+	children: {
+		paddingTop: theme.spacing(4),
+		paddingBottom: theme.spacing(4),
+		'&, & > *': {
+			height: '100%'
+		},
 	}
 }))
 
-const Page = ({ children }) => {
+const Page = ({ children, active, spinner, text }) => {
 	const classes = useStyles()
 
 	return (
-		<>
+		<main className={classes.root}>
 			<AppBar
-				className={classes.appBar}
 				color="primary"
 				elevation={5}
 				position="static"
 			>
 				<Toolbar>
-					<div className={classes.logoGrouping}>
+					<div>
 						<Link href="/">
 							<img src="logo.svg" />
 						</Link>
@@ -52,7 +69,17 @@ const Page = ({ children }) => {
 					</div>
 				</Toolbar>
 			</AppBar>
-			{children}
+				<LoadingOverlay
+					active={active}
+					spinner={spinner}
+					text={text}
+				>
+					<div className={classes.children}>
+						<>
+							{children}
+						</>
+					</div>
+				</LoadingOverlay>
 			<BottomNavigation
 				component="footer"
 				showLabels
@@ -63,7 +90,8 @@ const Page = ({ children }) => {
 					label="@ Jorge Navarro 2019"
 				/>
 			</BottomNavigation>
-		</>
+		</main>
+		
 	)
 }
 
