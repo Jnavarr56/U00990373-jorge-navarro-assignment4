@@ -24,7 +24,7 @@ import {
 	CardMedia
 } from '@material-ui/core'
 import { makeStyles } from '@material-ui/styles'
-import { Page, SubwayTimes } from './components'
+import { Page } from './components'
 import {
 	getAddressFromCoords,
 	getNearbyStations,
@@ -69,7 +69,9 @@ const useStyles = makeStyles(() => ({
 			height: '100%'
 		},
 		'& .MuiCardContent-root,': {
-			overflowY: 'auto'
+			overflowY: 'auto',
+			padding: 0,
+
 		}
 	},
 	contentCard: {
@@ -396,6 +398,23 @@ const App = () => {
 																		}
 																		subheader={subheader}
 																		title={dir}
+																		action={
+																			<CountDown
+																				date={time.toDate()}
+																				renderer={({
+																					hours,
+																					minutes,
+																					seconds,
+																					completed
+																				}) => {
+																					return completed
+																						? 'Gone!'
+																						: `${zeroPad(hours)}:${zeroPad(
+																								minutes
+																						)}:${zeroPad(seconds)}`
+																				}}
+																			/>
+																		}
 																	/>
 																	<Divider />
 																</React.Fragment>
@@ -467,12 +486,12 @@ const App = () => {
 								You'll be asked to do this after you press "Okay".
 								<br />
 								<br />
-								This site will not work until you enable this perrmisison.
+								This site will not work until you enable this permission.
 								<br />
 								<br />
 								If you've received this message more than once but haven't been
-								prompted by your broswer to enable location sharing, try going
-								in your browers settings for this site and manually allowing
+								prompted by your browser to enable location sharing, try going
+								in your browsers settings for this site and manually allowing
 								permission.
 							</DialogContentText>
 						</DialogContent>
