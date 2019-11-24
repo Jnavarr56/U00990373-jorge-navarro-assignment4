@@ -28,7 +28,10 @@ export const getAllNextNearbyDepartures = async (lat, lng) => {
     
     return await axios.get(url)
         .then(({ data }) => data.Res.MultiNextDepartures.MultiNextDeparture)
-        .catch(() => null)
+        .catch(error => {
+            console.log(error)
+            return null
+        })
 }
 
 export const getNextDeparturesForStation = async stationId => {
@@ -41,5 +44,8 @@ export const getNextDeparturesForStation = async stationId => {
 
     return await axios.get(url)
         .then(({ data }) => data.Res.MultiNextDepartures.MultiNextDeparture[0].NextDepartures.Dep)
-        .catch(err => null)
+        .catch(error => {
+            console.log(error)
+            return null
+        })
 }

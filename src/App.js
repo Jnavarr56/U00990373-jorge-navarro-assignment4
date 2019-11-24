@@ -73,7 +73,7 @@ const useStyles = makeStyles(() => ({
 
 
 const REFRESH_TIMEOUT = process.env.NODE_ENV === 'development' ? 5000 : 30000
-const LOADING_DELAY = process.env.NODE_ENV === 'development' ? 100 : 1000
+const LOADING_DELAY = process.env.NODE_ENV === 'development' ? 100 : 500
 
 const App = () => {
 
