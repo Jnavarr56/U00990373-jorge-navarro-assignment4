@@ -28,10 +28,8 @@ const Column = ({ children, title, elevation, ...rest }) => {
 		<Grid
 			item
 			{...rest}
-		>
-
-		</Grid>
-	)
+		/>
+)
 }
 
 export default Column

@@ -18,14 +18,21 @@ import {
 	Tab
 } from '@material-ui/core'
 import { makeStyles } from '@material-ui/styles'
-import { getAddressFromCoords, getNearbyStations, getWalkingDirections, isInNYC } from '../utils/googleMaps' 
-import { getAllNextNearbyDepartures, getNextDeparturesForStation } from '../utils/here' 
+import {
+	getAddressFromCoords,
+	getNearbyStations,
+	getWalkingDirections,
+	isInNYC
+} from '../utils/googleMaps'
+import {
+	getAllNextNearbyDepartures,
+	getNextDeparturesForStation
+} from '../utils/here'
 import LoadingOverlay from 'react-loading-overlay'
 
 import Carousel from 'react-material-ui-carousel'
 import CountDown, { zeroPad } from 'react-countdown-now'
 import moment from 'moment'
-
 
 const useStyles = makeStyles(theme => ({
 	overlay: {
@@ -63,12 +70,10 @@ const useStyles = makeStyles(theme => ({
 	}
 }))
 
-
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
 const REFRESH_TIMEOUT = process.env.NODE_ENV === 'development' ? 5000 : 30000
 
 const SubwayTimes = () => {
-
 	const classes = useStyles()
 
 	const [ permission, setPermission ] = useState(null)
@@ -81,26 +86,23 @@ const SubwayTimes = () => {
 	const [ tab, setTabs ] = useState('photos')
 
 	const handleConfirmPermissions = async () => {
-
 		setLoading('Checking location permissions')
 		await delay(1000)
-		
+
 		navigator.geolocation.getCurrentPosition(
 			async ({ coords }) => {
 				console.log('coords: ', coords)
 
-				setPermission(true)	
+				setPermission(true)
 				setLoading('Permissions granted! :)')
 				await delay(1000)
 
-
 				setLoading('Getting coordinates')
 				await delay(1000)
-				const { latitude: lat, longitude: lng } = coords 
+				const { latitude: lat, longitude: lng } = coords
 				setLoading(`Found coordinates: (${lat}, ${lng})!`)
 				await delay(1000)
 
-				
 				setLoading(`Checking if location is in NYC`)
 				await delay(1000)
 				//breakpoints
@@ -120,16 +122,16 @@ const SubwayTimes = () => {
 				setLoading(`Found address: ${address.formatted_address}!`)
 				await delay(1000)
 
-
 				setLoading(`Searching for nearby subway stations`)
 				await delay(1000)
 				// breakpoint
 				const nearbyStations = await getNearbyStations(lat, lng)
 				console.log('nearbyStations: ', nearbyStations)
 				if (!nearbyStations) return
-				setLoading(`Found some nearby stations: ${nearbyStations.length} exactly!`)
+				setLoading(
+					`Found some nearby stations: ${nearbyStations.length} exactly!`
+				)
 				await delay(1000)
-
 
 				setLoading(`Getting closest station`)
 				await delay(1000)
@@ -138,21 +140,22 @@ const SubwayTimes = () => {
 				setLoading(`Found closest station: ${closestStation.name}!`)
 				await delay(1000)
 
-
 				setLoading(`Getting walking route to station - ${closestStation.name}`)
 				await delay(1000)
-				const origin = { lat, lng } 
+				const origin = { lat, lng }
 				const destination = {
 					lat: closestStation.geometry.location.lat(),
 					lng: closestStation.geometry.location.lng()
 				}
-				const walkingDirections = await getWalkingDirections(origin, destination)
+				const walkingDirections = await getWalkingDirections(
+					origin,
+					destination
+				)
 				//breakpoint
 				if (!walkingDirections) return
 				console.log('walkingDirections', walkingDirections)
 				setLoading(`Found walking route to station - ${closestStation.name}!`)
 				await delay(1000)
-
 
 				setLoading(`Getting nearby departures`)
 				await delay(1000)
@@ -163,34 +166,40 @@ const SubwayTimes = () => {
 				setLoading(`Found all nearby departures!`)
 				await delay(1000)
 
-
-				setLoading(`Matching nearby departures to station - ${closestStation.name}`)
+				setLoading(
+					`Matching nearby departures to station - ${closestStation.name}`
+				)
 				await delay(1000)
 				const closestStationDepartures = nearbyDepartures[0]
 				console.log('nearbyDepartures', nearbyDepartures)
-				setLoading(`Matched nearby departures to station - ${closestStation.name}!`)
+				setLoading(
+					`Matched nearby departures to station - ${closestStation.name}!`
+				)
 				await delay(1000)
 
-
-				setLoading(`Building refresh function for station - ${closestStation.name}`)
+				setLoading(
+					`Building refresh function for station - ${closestStation.name}`
+				)
 				await delay(1000)
 
 				const refreshDepartures = async () => {
 					console.log('Refreshing', closestStationDepartures.Stn.id)
-					
+
 					setRefreshing(true)
 
-					
-					const newDepartures = await getNextDeparturesForStation(closestStationDepartures.Stn.id)
-					//breakpoint	
+					const newDepartures = await getNextDeparturesForStation(
+						closestStationDepartures.Stn.id
+					)
+					//breakpoint
 					if (newDepartures) {
-					
 						setRefreshing(false)
 						console.log('Refreshing', newDepartures)
 						setTimeout(refreshDepartures, REFRESH_TIMEOUT)
 					}
-				} 
-				setLoading(`Built refresh function for station - ${closestStation.name}!`)
+				}
+				setLoading(
+					`Built refresh function for station - ${closestStation.name}!`
+				)
 				await delay(1000)
 
 				console.log('Done! :)')
@@ -207,21 +216,19 @@ const SubwayTimes = () => {
 		)
 	}
 
-	
 	useEffect(() => {
 		if (tab === 'map' && directions) {
-			
 			const { google } = window
 
 			const directionsRenderer = new google.maps.DirectionsRenderer()
-			const map = new google.maps.Map(document.getElementById('map'), { zoom: 7 })
+			const map = new google.maps.Map(document.getElementById('map'), {
+				zoom: 7
+			})
 
 			directionsRenderer.setMap(map)
 			directionsRenderer.setDirections(directions)
 		}
 	}, [ directions, tab ])
-
-
 
 	return (
 		<LoadingOverlay

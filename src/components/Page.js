@@ -27,10 +27,10 @@ const useStyles = makeStyles(theme => ({
 					justifyContent: 'flex-start',
 					'& img': {
 						height: theme.spacing(4),
-						marginRight: theme.spacing(1.5),
+						marginRight: theme.spacing(1.5)
 					}
 				}
-			},
+			}
 		},
 		'& > ._loading_overlay_wrapper': {
 			'&, & > *:first-child': {
@@ -46,7 +46,7 @@ const useStyles = makeStyles(theme => ({
 		paddingBottom: theme.spacing(4),
 		'&, & > *': {
 			height: '100%'
-		},
+		}
 	}
 }))
 
@@ -69,17 +69,15 @@ const Page = ({ children, active, spinner, text }) => {
 					</div>
 				</Toolbar>
 			</AppBar>
-				<LoadingOverlay
-					active={active}
-					spinner={spinner}
-					text={text}
-				>
-					<div className={classes.children}>
-						<>
-							{children}
-						</>
-					</div>
-				</LoadingOverlay>
+			<LoadingOverlay
+				active={active}
+				spinner={spinner}
+				text={text}
+			>
+				<div className={classes.children}>
+					<>{children}</>
+				</div>
+			</LoadingOverlay>
 			<BottomNavigation
 				component="footer"
 				showLabels
@@ -91,7 +89,6 @@ const Page = ({ children, active, spinner, text }) => {
 				/>
 			</BottomNavigation>
 		</main>
-		
 	)
 }
 

@@ -3,9 +3,17 @@ import { ThemeProvider } from '@material-ui/styles'
 import theme from './theme'
 import {
 	Container,
-	Card, CardHeader, CardContent, Divider,
-	Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
-	Button, Grid,
+	Card,
+	CardHeader,
+	CardContent,
+	Divider,
+	Dialog,
+	DialogTitle,
+	DialogContent,
+	DialogContentText,
+	DialogActions,
+	Button,
+	Grid,
 	CircularProgress,
 	LinearProgress,
 	CssBaseline,
@@ -17,14 +25,22 @@ import {
 } from '@material-ui/core'
 import { makeStyles } from '@material-ui/styles'
 import { Page, SubwayTimes } from './components'
-import { getAddressFromCoords, getNearbyStations, getWalkingDirections, renderWalkingRoute, isInNYC } from './utils/googleMaps' 
-import { getAllNextNearbyDepartures, getNextDeparturesForStation } from './utils/here' 
-import { delay } from './utils/general' 
+import {
+	getAddressFromCoords,
+	getNearbyStations,
+	getWalkingDirections,
+	renderWalkingRoute,
+	isInNYC
+} from './utils/googleMaps'
+import {
+	getAllNextNearbyDepartures,
+	getNextDeparturesForStation
+} from './utils/here'
+import { delay } from './utils/general'
 import moment from 'moment'
 import Carousel from 'react-material-ui-carousel'
 import LoadingOverlay from 'react-loading-overlay'
 import CountDown, { zeroPad } from 'react-countdown-now'
-
 
 const useStyles = makeStyles(() => ({
 	root: {
@@ -32,8 +48,8 @@ const useStyles = makeStyles(() => ({
 		overflow: 'hidden',
 		'& > *:first-child.MuiCard-root': {
 			height: '100%',
-			width: '100%',
-		},
+			width: '100%'
+		}
 	},
 	loadingMessage: {
 		color: 'white'
@@ -52,31 +68,26 @@ const useStyles = makeStyles(() => ({
 		'& .MuiCardContent-root, & ._loading_overlay_wrapper': {
 			height: '100%'
 		},
-		'& .MuiCardContent-root,':  {
-			overflowY: 'auto'		
-		},
+		'& .MuiCardContent-root,': {
+			overflowY: 'auto'
+		}
 	},
 	contentCard: {
-		height: 600,
+		height: 600
 	},
 	content: {
 		height: 400,
 		width: '100%',
 		'& > .MuiCardMedia-root': {
-			height: '100%',
+			height: '100%'
 		}
-	},
-
-	
-
+	}
 }))
-
 
 const REFRESH_TIMEOUT = process.env.NODE_ENV === 'development' ? 5000 : 30000
 const LOADING_DELAY = process.env.NODE_ENV === 'development' ? 100 : 500
 
 const App = () => {
-
 	const classes = useStyles()
 
 	const [ openPermissionsDialog, setOpenPermissionsDialog ] = useState(false)
@@ -88,29 +99,24 @@ const App = () => {
 	const [ tab, setTab ] = useState('photos')
 	const [ data, setData ] = useState(null)
 
-
 	const handleReset = () => {
 		setLoadingState(false)
 		setLoadingMessage('')
 		setloadingProgress(0)
 		setloadingBuffer(0)
 	}
-	
-	
-	const handleInitRequests = async () => {
 
+	const handleInitRequests = async () => {
 		setloadingProgress(2)
 		setloadingBuffer(2)
 		setOpenPermissionsDialog(false)
 		setLoadingState(true)
 
-		
 		setloadingBuffer(10)
 		setLoadingMessage('Checking location permissions')
-		
-		
+
 		await delay(LOADING_DELAY)
-		
+
 		navigator.geolocation.getCurrentPosition(
 			async ({ coords }) => {
 				console.log('coords: ', coords)
@@ -119,12 +125,10 @@ const App = () => {
 				setLoadingMessage('Permissions granted! :)')
 				await delay(LOADING_DELAY)
 
-
-				
 				setloadingBuffer(25)
 				setLoadingMessage('Getting coordinates')
 				await delay(LOADING_DELAY)
-				const { latitude: lat, longitude: lng } = coords 
+				const { latitude: lat, longitude: lng } = coords
 				setloadingProgress(25)
 				setLoadingMessage(`Found coordinates: (${lat}, ${lng})!`)
 				await delay(LOADING_DELAY)
@@ -152,7 +156,6 @@ const App = () => {
 				setLoadingMessage(`Found address: ${address.formatted_address}!`)
 				await delay(LOADING_DELAY)
 
-
 				setloadingBuffer(70)
 				setLoadingMessage(`Searching for nearby subway stations`)
 				await delay(LOADING_DELAY)
@@ -161,9 +164,10 @@ const App = () => {
 				console.log('nearbyStations: ', nearbyStations)
 				if (!nearbyStations) return
 				setloadingProgress(70)
-				setLoadingMessage(`Found some nearby stations: ${nearbyStations.length} exactly!`)
+				setLoadingMessage(
+					`Found some nearby stations: ${nearbyStations.length} exactly!`
+				)
 				await delay(LOADING_DELAY)
-
 
 				setloadingBuffer(75)
 				setLoadingMessage(`Getting closest station`)
@@ -175,19 +179,26 @@ const App = () => {
 				await delay(LOADING_DELAY)
 
 				setloadingBuffer(85)
-				setLoadingMessage(`Getting walking route to station - ${closestStation.name}`)
+				setLoadingMessage(
+					`Getting walking route to station - ${closestStation.name}`
+				)
 				await delay(LOADING_DELAY)
-				const origin = { lat, lng } 
+				const origin = { lat, lng }
 				const destination = {
 					lat: closestStation.geometry.location.lat(),
 					lng: closestStation.geometry.location.lng()
 				}
-				const walkingDirections = await getWalkingDirections(origin, destination)
+				const walkingDirections = await getWalkingDirections(
+					origin,
+					destination
+				)
 				//breakpoint
 				if (!walkingDirections) return
 				console.log('walkingDirections', walkingDirections)
 				setloadingProgress(85)
-				setLoadingMessage(`Found walking route to station - ${closestStation.name}!`)
+				setLoadingMessage(
+					`Found walking route to station - ${closestStation.name}!`
+				)
 				await delay(LOADING_DELAY)
 
 				setloadingBuffer(95)
@@ -202,24 +213,32 @@ const App = () => {
 				await delay(LOADING_DELAY)
 
 				setloadingBuffer(97)
-				setLoadingMessage(`Matching nearby departures to station - ${closestStation.name}`)
+				setLoadingMessage(
+					`Matching nearby departures to station - ${closestStation.name}`
+				)
 				await delay(LOADING_DELAY)
 				const closestStationDepartures = nearbyDepartures[0]
 				console.log('closestStationDepartures', closestStationDepartures)
-		
+
 				setloadingProgress(97)
-				setLoadingMessage(`Matched nearby departures to station - ${closestStation.name}!`)
+				setLoadingMessage(
+					`Matched nearby departures to station - ${closestStation.name}!`
+				)
 				await delay(LOADING_DELAY)
 
 				setloadingBuffer(100)
-				setLoadingMessage(`Building refresh function for station - ${closestStation.name}`)
+				setLoadingMessage(
+					`Building refresh function for station - ${closestStation.name}`
+				)
 				await delay(LOADING_DELAY)
 				const refreshDepartures = async () => {
 					console.log('Refreshing', closestStationDepartures.Stn.id)
 					setRefreshing(true)
-					const newDepartures = await getNextDeparturesForStation(closestStationDepartures.Stn.id)
+					const newDepartures = await getNextDeparturesForStation(
+						closestStationDepartures.Stn.id
+					)
 					if (!newDepartures) return
-					
+
 					console.log('Refreshing', newDepartures)
 					setData(prev => ({
 						...prev,
@@ -227,15 +246,15 @@ const App = () => {
 					}))
 
 					setTimeout(() => {
-											setRefreshing(false)
+						setRefreshing(false)
 
-					setTimeout(refreshDepartures, REFRESH_TIMEOUT)
+						setTimeout(refreshDepartures, REFRESH_TIMEOUT)
 					}, 100)
-
-				
-				} 
+				}
 				setloadingProgress(100)
-				setLoadingMessage(`Built refresh function for station - ${closestStation.name}!`)
+				setLoadingMessage(
+					`Built refresh function for station - ${closestStation.name}!`
+				)
 				await delay(LOADING_DELAY)
 
 				setLoadingMessage(`Done! :)`)
@@ -252,7 +271,6 @@ const App = () => {
 				})
 
 				setTimeout(refreshDepartures, REFRESH_TIMEOUT)
-
 			},
 			({ code }) => {
 				console.log('Location permission denied')
@@ -264,179 +282,211 @@ const App = () => {
 			// ,{ enableHighAccuracy: true }
 		)
 	}
-	
-	const handleQueryPermission = () => {
 
+	const handleQueryPermission = () => {
 		setLoadingState(true)
 
 		navigator.permissions.query({ name: 'geolocation' }).then(({ state }) => {
-
 			setLoadingState(false)
-			
-			if (state === 'granted') handleInitRequests()
 
+			if (state === 'granted') handleInitRequests()
 			else setOpenPermissionsDialog(true)
 		})
-
 	}
 	useEffect(handleQueryPermission, [])
 
 	useEffect(() => {
-
 		if (data && tab === 'map') renderWalkingRoute('map', data.directions)
+	}, [ data, tab ])
 
-	}, [ tab ])
-	
-
-
-	const circleSpin = <CircularProgress color="primary" thickness={1.8} size={200} />
-	
-	const spinner = (
-		loadingProgress ? (
-			<LinearProgress className={classes.progressBar} variant={'buffer'} valueBuffer={loadingBuffer} value={loadingProgress}/>
-		) : (
-			circleSpin
-		) 
+	const circleSpin = (
+		<CircularProgress
+			color="primary"
+			size={200}
+			thickness={1.8}
+		/>
 	)
 
-	const text = <Typography className={classes.loadingMessage} variant="overline">{loadingMessage}</Typography>
-			
+	const spinner = loadingProgress ? (
+		<LinearProgress
+			className={classes.progressBar}
+			value={loadingProgress}
+			valueBuffer={loadingBuffer}
+			variant="buffer"
+		/>
+	) : (
+		circleSpin
+	)
+
+	const text = (
+		<Typography
+			className={classes.loadingMessage}
+			variant="overline"
+		>
+			{loadingMessage}
+		</Typography>
+	)
+
 	return (
 		<>
 			<CssBaseline />
 			<ThemeProvider theme={theme}>
-				<Page 
-					active={loadingState}	
-					text={text}
+				<Page
+					active={loadingState}
 					spinner={spinner}
-				>	
-						<Container
-							className={classes.root}
-							maxWidth="lg"
-						>
-							<Card>
-								<CardHeader title={'Your Local Train Times'} />
-								<Divider/>
-								{data && (
-									<CardHeader 
-										title={data.name}
-										subheader={`${(data.distance/ 1609.344).toFixed(5)} miles away`}
-									/>
-								)}
+					text={text}
+				>
+					<Container
+						className={classes.root}
+						maxWidth="lg"
+					>
+						<Card>
+							<CardHeader title="Your Local Train Times" />
+							<Divider />
+							{data && (
+								<CardHeader
+									subheader={`${(data.distance / 1609.344).toFixed(
+										5
+									)} miles away`}
+									title={data.name}
+								/>
+							)}
 
-								<Divider />
-								{data && (
-									<CardContent>
-										<Grid container spacing={2} justify="space-around"> 
-											<Grid item xs={7} >
-												<Card className={classes.departuresCard}>
-													<LoadingOverlay active={refreshing} spinner={circleSpin}>
-													<CardContent>					
+							<Divider />
+							{data && (
+								<CardContent>
+									<Grid
+										container
+										justify="space-around"
+										spacing={2}
+									>
+										<Grid
+											item
+											xs={7}
+										>
+											<Card className={classes.departuresCard}>
+												<LoadingOverlay
+													active={refreshing}
+													spinner={circleSpin}
+												>
+													<CardContent>
 														{data.departures.map((dep, i) => {
-
 															const { time: timestamp } = dep
 															const { dir, name, At } = dep.Transport
-															const { color: backgroundColor , textColor: color } = At
+															const {
+																color: backgroundColor,
+																textColor: color
+															} = At
 															const time = moment(timestamp)
-															const subheader = `${time.format('hh:mm a')} - ${time.fromNow()}`
+															const subheader = `${time.format(
+																'hh:mm a'
+															)} - ${time.fromNow()}`
 															return (
-																<React.Fragment key={`dep-${i}`} >
-																	<CardHeader 
-																		title={dir}
-																		subheader={subheader}
-																		avatar={(
-																	
-																			<Avatar style={{ backgroundColor  }}>
-																				<Typography variant="h4" style={{ color }}>
+																<React.Fragment key={`dep-${i}`}>
+																	<CardHeader
+																		avatar={
+																			<Avatar style={{ backgroundColor }}>
+																				<Typography
+																					style={{ color }}
+																					variant="h4"
+																				>
 																					{name}
 																				</Typography>
 																			</Avatar>
-																		)}
+																		}
+																		subheader={subheader}
+																		title={dir}
 																	/>
-																	<Divider/>
+																	<Divider />
 																</React.Fragment>
 															)
 														})}
 													</CardContent>
-													</LoadingOverlay>
-												</Card>
-
-											</Grid>
-											<Grid item xs={5}>
-												<Card className={classes.contentCard}>
-												<Tabs
-																											value={tab}
-																											onChange={(e, val) => setTab(val)}
-																										>
-																											<Tab
-																												label="Photos"
-																												value="photos"
-																											/>
-																											<Tab
-																												label="Map"
-																												value="map"
-																											/>
-																										</Tabs>
-													
-
-													
-													<CardContent>
-														{tab === 'map' && <div id='map' style={{ height: 400 }}/>}
-														{tab === 'photos' && (
-															<Carousel animation="fade">
-																{data.photos.map(photo => {
-																	const url = photo.getUrl()
-																	return (
-																		<Card key={url}>
-																			<CardContent className={classes.content}>
-																				<CardMedia
-																					image={url}
-																					key={url}
-																				/>
-																			</CardContent>
-																		</Card>
-																	)
-																})}																
-															</Carousel>
-														)}
-													</CardContent>
-												</Card>
-											</Grid>
+												</LoadingOverlay>
+											</Card>
 										</Grid>
-									</CardContent>
-								)}
+										<Grid
+											item
+											xs={5}
+										>
+											<Card className={classes.contentCard}>
+												<Tabs
+													value={tab}
+													onChange={(e, val) => setTab(val)}
+												>
+													<Tab
+														label="Photos"
+														value="photos"
+													/>
+													<Tab
+														label="Map"
+														value="map"
+													/>
+												</Tabs>
 
-							</Card>
-						</Container>
-						<Dialog open={openPermissionsDialog}>
-							<DialogTitle>I need to access your location!</DialogTitle>
-							<Divider />
-							<DialogContent>
-								<DialogContentText>
-									You haven't yet enabled location permission for this site in your browser.
-									<br/>
-									You'll be asked to do this after you press "Okay".
-									<br/>
-									<br/>
-									This site will not work until you enable this perrmisison.
-									<br/>
-									<br/>
-									If you've received this message more than once but haven't been prompted
-									by your broswer to enable location sharing, try going in your 
-									browers settings for this site and manually allowing permission.
-								</DialogContentText>
-							</DialogContent>
-							<Divider />
-							<DialogActions>
-								<Button
-									color="secondary"
-									variant="contained"
-									onClick={handleInitRequests}
-								>
-									Got It
-								</Button>
-							</DialogActions>
-						</Dialog>
+												<CardContent>
+													{tab === 'map' && (
+														<div
+															id="map"
+															style={{ height: 400 }}
+														/>
+													)}
+													{tab === 'photos' && (
+														<Carousel animation="fade">
+															{data.photos.map(photo => {
+																const url = photo.getUrl()
+																return (
+																	<Card key={url}>
+																		<CardContent className={classes.content}>
+																			<CardMedia
+																				image={url}
+																				key={url}
+																			/>
+																		</CardContent>
+																	</Card>
+																)
+															})}
+														</Carousel>
+													)}
+												</CardContent>
+											</Card>
+										</Grid>
+									</Grid>
+								</CardContent>
+							)}
+						</Card>
+					</Container>
+					<Dialog open={openPermissionsDialog}>
+						<DialogTitle>I need to access your location!</DialogTitle>
+						<Divider />
+						<DialogContent>
+							<DialogContentText>
+								You haven't yet enabled location permission for this site in
+								your browser.
+								<br />
+								You'll be asked to do this after you press "Okay".
+								<br />
+								<br />
+								This site will not work until you enable this perrmisison.
+								<br />
+								<br />
+								If you've received this message more than once but haven't been
+								prompted by your broswer to enable location sharing, try going
+								in your browers settings for this site and manually allowing
+								permission.
+							</DialogContentText>
+						</DialogContent>
+						<Divider />
+						<DialogActions>
+							<Button
+								color="secondary"
+								variant="contained"
+								onClick={handleInitRequests}
+							>
+								Got It
+							</Button>
+						</DialogActions>
+					</Dialog>
 				</Page>
 			</ThemeProvider>
 		</>
