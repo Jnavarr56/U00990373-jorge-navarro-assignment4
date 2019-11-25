@@ -21,8 +21,10 @@ REACT_APP_GOOGLE_API_KEY=your_credentials
 ```
 
 2)
-```npm install```
-```npm run start```
+```
+npm install
+npm run start
+```
 
 ### Warning
 
